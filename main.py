@@ -10,7 +10,7 @@ def quotes_page():
     buttons.place(relx=0.5, y=110, anchor="center")
     profile = buttons.buttons[0][0]
     profile.config(text="profile", command=lambda: window.show(1))
-    button1_tooltip = ToolTip(profile, 'This is a tooltip for button 1.')
+    button1_tooltip = ToolTip(profile, 'asd')
 
     textbox = Textbox(page1)
 
