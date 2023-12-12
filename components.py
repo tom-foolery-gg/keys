@@ -5,6 +5,7 @@ from utils import get_accuracy, get_wpm
 
 LARGEFONT = ("Century Gothic", 35)
 SMALLFONT = ("Century Gothic", 18)
+TOOLTIPFONT = ("Century Gothic", 10)
 BUTTONFONT = ("Century Gothic", 12)
 TEXTFONT = ("Lucida Console", 18)
 SPECIAL = (' ', '.', ':', '\'', ';', ',')
@@ -37,10 +38,14 @@ class Page(tk.Frame):
         label = tk.Label(self, text=title, font=LARGEFONT, bg="#1a1a1f", fg="#e14646")
         label.place(relx=0.5, y=50, anchor="center")
 
-    def add_field(self, title, value): 
+    def add_field(self, title, value, desc=None): 
+        x = self.fieldcount*200+100
         self.fieldcount += 1
-        tk.Label(self, text=title, font=SMALLFONT, bg="#1a1a1f", fg="#e14646").place(x=self.fieldcount*100, y=150)
-        tk.Label(self, text=value, font=LARGEFONT, bg="#1a1a1f", fg="#ffffff").place(x=self.fieldcount*100, y=185)
+        field = tk.Frame(self, height=100, width=200)
+        tk.Label(field, text=title, font=SMALLFONT, bg="#1a1a1f", fg="#e14646").place(y=0)
+        tk.Label(field, text=value, font=LARGEFONT, bg="#1a1a1f", fg="#ffffff").place(y=35)
+        field.place(x=x, y=150)
+        if desc: ToolTip(field, desc, offset=0)
 
 class ButtonPanel(tk.Frame):
     def __init__(self, parent, size): 
@@ -185,3 +190,45 @@ class TypingTest:
         self.stats["raw"] = get_wpm(len(self.chars), time)
         self.stats["wpm"] = get_wpm(self.stats["correct"], time)
 
+class ToolTip:
+    def __init__(self, comp, text='info', offset=6):
+        self.comp = comp
+        self.text = text
+        self.offset = offset
+        self.comp.bind("<Enter>", self.enter)
+        self.comp.bind("<Leave>", self.leave)
+        self.id = None
+        self.tw = None
+
+    def enter(self, event=None):
+        self.schedule()
+
+    def leave(self, event=None):
+        self.unschedule()
+        self.hidetip()
+
+    def schedule(self):
+        self.unschedule()
+        self.id = self.comp.after(500, self.showtip)
+
+    def unschedule(self):
+        if self.id: self.comp.after_cancel(self.id)
+        self.id = None
+
+    def showtip(self, event=None):
+        x, y = self.comp.bbox("insert")[:2]
+        x += self.comp.winfo_rootx()
+        y += self.comp.winfo_rooty() + self.comp.winfo_height() + self.offset
+
+        self.tw = tk.Toplevel(self.comp)
+        self.tw.wm_overrideredirect(True)
+        self.tw.wm_geometry(f"+{x}+{y}")
+        border = tk.Frame(self.tw, bg="#111114", padx=5, pady=5)
+        label = tk.Label(border, text=self.text, font=TOOLTIPFONT, justify='left',
+                         bg="#111114", relief='solid', border=0,
+                         wraplength=180)
+        label.pack()
+        border.pack(ipadx=1)
+    def hidetip(self):
+        if self.tw:
+            self.tw.destroy()
