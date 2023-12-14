@@ -32,7 +32,7 @@ class Window(tk.Tk):
         self.title("ASD")
         self.geometry("1200x600")
         self.resizable(width=False, height=False)
-        self.tk_setPalette(background="#1a1a1f", foreground="white")
+        self.tk_setPalette(background="#1a1a1f", foreground="#ffffff")
 
         # Define a list to store page frames
         self.pages = []
@@ -66,7 +66,7 @@ class Page(tk.Frame):
             text=title,
             font=FONT_LARGE,
             bg="#1a1a1f",
-            fg="#e14646",
+            fg="#e14646"
         )
         label.place(relx=0.5, y=50, anchor="center")
 
@@ -83,7 +83,7 @@ class Page(tk.Frame):
             text=title,
             font=FONT_SMALL,
             bg="#1a1a1f",
-            fg="#e14646",
+            fg="#e14646"
         ).place(y=0)
 
         # Field value label
@@ -92,7 +92,7 @@ class Page(tk.Frame):
             text=value,
             font=FONT_LARGE,
             bg="#1a1a1f",
-            fg="#ffffff",
+            fg="#ffffff"
         ).place(y=35)
 
         field.place(x=x, y=150)
@@ -190,7 +190,7 @@ class Textbox(tk.Canvas):
                 text=char,
                 fill="#61616b",
                 font=FONT_TEXT,
-                anchor="nw",
+                anchor="nw"
             )
 
             # Save char and labels to test object for tracking
@@ -289,7 +289,7 @@ class Textbox(tk.Canvas):
         prev_index = self.current_index - 1
 
         # Check if the previous character was typed correctly
-        if test.typed[prev_index] != test.chars[prev_index]:
+        if test.typed[prev_index] == test.chars[prev_index]:
             return
 
         # Update current index and character label
@@ -343,15 +343,10 @@ class TypingTest:
             "correct": 0,  # Number of correctly typed chars
             "incorrect": 0,  # Number of incorrectly typed chars
             "starttime": 0,  # Start time of the test
-            "stoptime": 0,  # End time of the test
-            "acc": 0,  # Typing accuracy
-            "raw": 0,  # Raw words per minute (including incorrect characters)
-            "wpm": 0,  # Words per minute (based on correct characters)
-            "weak": [],  # List of missed characters
         }
 
     def key_press(self, typed_char, req_char):
-    # Updates statistics based on the typed character and the required character.
+    # Updates stats based on the typed char and the required char
 
         if typed_char == req_char:
             self.stats["correct"] += 1
@@ -365,7 +360,7 @@ class TypingTest:
         self.typed.append(typed_char)
 
     def evaluate(self, time):
-    # Calculates and stores additional statistics based on the test duration.
+    # Calculates and stores stats based on test results
 
         self.stats["acc"] = get_accuracy(self.stats)
         self.stats["raw"] = get_wpm(len(self.chars), time)
@@ -379,72 +374,61 @@ class TypingTest:
         self.stats["weak"] = weak
 
 class ToolTip:
-# Class for creating and handling widget tooltips
 
-    def __init__(self, comp, text="info", offset=6):
-        self.comp = comp # Widget to which the tooltip is applied to
-        self.text = text # Text displayed in the tooltip
-        self.offset = offset # Distance between tooltip and widget
+    def __init__(self, widget, text="info", offset=6):
+        self.widget = widget  # Widget to which the tooltip is applied
+        self.text = text  # Text displayed in the tooltip
+        self.offset = offset  # Distance between tooltip and widget
 
         # Bind events to show and hide the tooltip
-        self.comp.bind("<Enter>", self.enter)
-        self.comp.bind("<Leave>", self.leave)
+        self.widget.bind("<Enter>", self.enter)
+        self.widget.bind("<Leave>", self.leave)
 
-        self.id = None # Variable for tracking schedule ID
-        self.tw = None # Variable for toplevel window
+        self.schedule_id = None  # Variable for tracking schedule ID
+        self.tooltip_window = None  # Variable for toplevel window
 
     def enter(self, event=None):
-    # Schedules the display of the tooltip with 500ms delay
-
+        # Schedules the display of the tooltip with 500ms delay
         self.schedule()
 
     def leave(self, event=None):
-    # Unschedules the display and hides the tooltip if exists 
-
+        # Unschedules the display and hides the tooltip if exists
         self.unschedule()
         self.hidetip()
 
     def schedule(self):
-    # Cancels any existing scheduling and schedules the tooltip display with a 500ms delay
-
+        # Cancels any existing scheduling and schedules the tooltip display with a 500ms delay
         self.unschedule()
-        self.id = self.comp.after(500, self.showtip)
+        self.schedule_id = self.widget.after(500, self.showtip)
 
     def unschedule(self):
-    # Cancels any pending tooltip display
-
-        if self.id:
-            self.comp.after_cancel(self.id)
-            self.id = None
+        # Cancels any pending tooltip display
+        if self.schedule_id:
+            self.widget.after_cancel(self.schedule_id)
+            self.schedule_id = None
 
     def showtip(self, event=None):
-    # Creates and displays the tooltip at the specified position.
+        # Creates and displays the tooltip at the specified position.
 
-        x, y = self.comp.bbox("insert")[:2]  # Get widget position
-
-        # Convert to global coordinates
-        x += self.comp.winfo_rootx()  
-        y += self.comp.winfo_rooty() + self.comp.winfo_height() + self.offset
+        # Get widget position relative to user's screen
+        x = self.widget.winfo_rootx()
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + self.offset
 
         # Create and configure the tooltip window
-        self.tw = tk.Toplevel(self.comp)
-        self.tw.wm_overrideredirect(True)  # Disable window mode
-        self.tw.wm_geometry(f"+{x}+{y}")  # Set position
+        self.tooltip_window = tk.Toplevel(self.widget)
+        self.tooltip_window.wm_overrideredirect(True)  # Disable window mode
+        self.tooltip_window.geometry(f"+{x}+{y}")  # Set position
 
-        border = tk.Frame(self.tw, bg="#111114", padx=5, pady=5)  # Create border frame
+        border = tk.Frame(self.tooltip_window, bg="#111114", padx=6, pady=6)  # Create border frame
         label = tk.Label(border,  # Create label widget
                          text=self.text,
                          font=FONT_TOOLTIP,
-                         justify="left",
                          bg="#111114",
-                         relief="solid",
-                         border=0,
                          wraplength=180)
         label.pack()  # Pack label inside border frame
-        border.pack(ipadx=1)  # Pack border frame in the toplevel window
+        border.pack()  # Pack border frame in the toplevel window
 
     def hidetip(self):
-    # Destroys the tooltip window if it exists.
-
-        if self.tw:
-            self.tw.destroy()
+        # Destroys the tooltip window if it exists.
+        if self.tooltip_window:
+            self.tooltip_window.destroy()

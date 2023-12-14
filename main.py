@@ -19,8 +19,8 @@ def quotes_page():
 
     textbox = Textbox(page1)
 
-    textbox.display_text(get_quote())
-    #textbox.display_text("asd")
+    #textbox.display_text(get_quote())
+    textbox.display_text("testing")
     textbox.bind(lambda: end_page(textbox.test.stats))
     textbox.ready()
 
@@ -33,14 +33,14 @@ def end_page(results):
 
     end_page.add_field("accuracy", results["acc"])
 
-    time = format_time(round(results["stoptime"]-results["starttime"], 1))
-    end_page.add_field("time taken", time)
-
     if results["incorrect"]:
         end_page.add_field("raw wpm", results["raw"], "Includes incorrectly typed characters")
 
         weak = "Your weak keys are {}, and {}".format(", ".join(results["weak"][:-1]), results["weak"][-1])
         end_page.add_field("mistakes", results["incorrect"], weak)
+    
+    time = format_time(round(results["stoptime"]-results["starttime"], 1))
+    end_page.add_field("time taken", time)
 
     window.register_page(end_page)
 

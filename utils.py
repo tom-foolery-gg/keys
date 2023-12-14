@@ -30,12 +30,11 @@ def get_accuracy(stats):
 
 def format_time(seconds):
     # Formats seconds into a human readable string
-
     if seconds < 60: # Less than a minute
-        return f"{seconds}s" 
+        return "{}s".format(seconds) 
     
     elif seconds % 60 == 0: # Perfect minutes
-        return f"{seconds // 60}m"
+        return "{}m".format(int(seconds / 60))
     
     else:
-        return f"{seconds // 60}m {seconds % 60}s"
+        return "{}m {}s".format(int(seconds // 60), int(seconds % 60))
