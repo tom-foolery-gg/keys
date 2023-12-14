@@ -1,29 +1,41 @@
 from random import randint
 
 def get_quote():
+# Gets a random quote from quotes.txt
+
     with open("quotes.txt") as f:
-        l = f.readlines()
-        return l[randint(0, len(l)-1)].strip()       
+        lines = f.readlines()
+        random_index = randint(0, len(lines) - 1)
+        return lines[random_index].strip()
 
-def get_wpm(c, t): return round((c/5)/t, 1)
 
-def get_accuracy(s): return str(s['correct']*100//(s['incorrect']+s['correct']))+"%"
+def get_wpm(chars, time):
+# Calculates the words per minute using character count and time taken
 
-def get_hex_range(start, end):
+    return round((chars / 5) / time, 1)
+
+
+def get_accuracy(stats):
+# Calculates the typing accuracy percentage using stats
+
+    correct = stats["correct"]
+    incorrect = stats["incorrect"]
+    accuracy = 0
+    if correct + incorrect > 0:
+        accuracy = round(correct * 100 / (correct + incorrect))
+        
+    # Returns accuracy as a string with %
+    return f"{accuracy}%" 
+
+
+def format_time(seconds):
+    # Formats seconds into a human readable string
+
+    if seconds < 60: # Less than a minute
+        return f"{seconds}s" 
     
-    s = [int(start[i+1:i+3], 16) for i in range(0, 6, 2)]
-    e = [int(end[i+1:i+3], 16) for i in range(0, 6, 2)]
+    elif seconds % 60 == 0: # Perfect minutes
+        return f"{seconds // 60}m"
     
-    l = []
-    for i in range(1, 11):
-        h = '#'
-        for j in range(3):
-            d = (e[j]-s[j])*i//10
-            x = hex(s[j]+d)
-            if len(x)==3: r = '0'+x[2:]
-            else: 
-                r = x[2:]
-            h += r
-        l.append(h)
-    return l
-
+    else:
+        return f"{seconds // 60}m {seconds % 60}s"

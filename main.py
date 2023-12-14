@@ -1,6 +1,6 @@
 from components import Window, Page, Textbox, ButtonPanel, Button, ToolTip
 
-from utils import get_quote
+from utils import get_quote, format_time
 
 def quotes_page():
     page1 = Page(window)
@@ -8,9 +8,14 @@ def quotes_page():
 
     buttons = ButtonPanel(page1, [2, 3])
     buttons.place(relx=0.5, y=110, anchor="center")
+
     profile = buttons.buttons[0][0]
-    profile.config(text="profile", command=lambda: window.show(1))
-    button1_tooltip = ToolTip(profile, 'asd')
+    profile.config(text="profile", command=lambda: window.show_page(1))
+    ToolTip(profile, 'Check your statistics')
+
+    options = buttons.buttons[0][1]
+    options.config(text="config", command=lambda: window.show_page(1))
+    ToolTip(options, 'Customize the application')
 
     textbox = Textbox(page1)
 
@@ -19,23 +24,33 @@ def quotes_page():
     textbox.bind(lambda: end_page(textbox.test.stats))
     textbox.ready()
 
-    window.define(page1)
+    window.register_page(page1)
 
 def end_page(results):
     end_page = Page(window)
-    end_page.add_field("wpm", results["wpm"])
-    end_page.add_field("raw wpm", results["raw"], "Includes incorrect characters as well.")
+
+    end_page.add_field("wpm", results["wpm"], "Considers only correctly typed characters")
+
     end_page.add_field("accuracy", results["acc"])
-    end_page.add_field("mistakes", results["incorrect"])
-    window.define(end_page)
+
+    time = format_time(round(results["stoptime"]-results["starttime"], 1))
+    end_page.add_field("time taken", time)
+
+    if results["incorrect"]:
+        end_page.add_field("raw wpm", results["raw"], "Includes incorrectly typed characters")
+
+        weak = "Your weak keys are {}, and {}".format(", ".join(results["weak"][:-1]), results["weak"][-1])
+        end_page.add_field("mistakes", results["incorrect"], weak)
+
+    window.register_page(end_page)
 
 window = Window()
 
 quotes_page()
 
 page2 = Page(window)
-window.define(page2)
-window.show(0)
+window.register_page(page2)
+window.show_page(0)
 
 
 window.mainloop()
