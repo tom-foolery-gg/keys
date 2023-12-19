@@ -37,26 +37,29 @@ class Window(tk.Tk):
         # Define a list to store page frames
         self.pages = []
 
-    def register_page(self, page):
+    def register_page(self, page, index=None):
     # Adds a page frame to the list and places it on the window
-
-        self.pages.append(page)
+        
+        if index==None: 
+            self.pages.append(page)
+        else: self.pages[index] = page
         page.place(x=0, y=0)
 
     def show_page(self, index):
-        # Raises a page frame to the top of the window
+        # Raises a page to the top of the window to display it
 
         self.pages[index].tkraise()
         self.current_page = index
 
 class Page(tk.Frame):
-#Template for the window pages
+# Template for the window pages
 
     def __init__(self, parent):
     # Creates the Page object
 
         super().__init__(parent, width=1200, height=900)
         self.field_count = 0
+        self.textbox = None
 
     def add_title(self, title):
         # Adds a title label to the top of the page
@@ -97,41 +100,31 @@ class Page(tk.Frame):
 
         field.place(x=x, y=150)
 
-        if desc:
-            # Add tooltip
+        if desc: # If a description is given, then tooltip is added
+
             ToolTip(field, desc, offset=0)
 
 class ButtonPanel(tk.Frame):
 # Template for a button panel with configurable buttons
 
-    def __init__(self, parent, button_layout):
+    def __init__(self, parent, buttons, size=80):
 
-        # Calculate panel width based on button count and spacing
-        width = sum(button_layout) * 80 + (len(button_layout) - 1) * 2
-        super().__init__(parent, width=width, height=40, bg="#e14646")
+        # Calculate panel width based on button count
+        width = buttons * size
+        super().__init__(parent, width=width, height=40, bg="#111114")
 
-        # Create a nested list of Button objects
+        # Create a list of Button objects
         self.buttons = []
-        for num_buttons in button_layout:
-            # Create a new row of buttons
-            row = []
+        for i in range(buttons):
+            button = Button(self, text=i)
 
-            for i in range(num_buttons):
-                button = Button(self, text=str(i))
-                row.append(button)
-
-            self.buttons.append(row)
+            self.buttons.append(button)
 
         x = 0
         # Place each button in panel
-        for row in self.buttons:
-            if x:
-                x += 2
-
-            # Place each button in current row
-            for button in row:
-                button.place(height=40, width=80, x=x)
-                x += 80
+        for button in self.buttons:
+            button.place(height=40, width=size, x=x)
+            x += size
 
 class Button(tk.Button):
     # Template for custom button
@@ -143,13 +136,13 @@ class Button(tk.Button):
             text=text,
             font=FONT_BUTTON,
             bg="#111114",
-            fg="#41414b",
+            fg="#51515b",
             borderwidth=0,
             highlightthickness=0,
             relief="flat",
             disabledforeground="#ffffff",
             activebackground="#111114",
-            activeforeground="#81818b",
+            activeforeground="#a1a1ab",
             state=state
         )
 
@@ -161,6 +154,7 @@ class Textbox(tk.Canvas):
         super().__init__(frame, height=300, width=900)
         self.place(relx=0.5, y=400, anchor="center")
         self.root = self.master.master
+        self.master.textbox = self
 
     def display_text(self, text):
 
@@ -170,11 +164,11 @@ class Textbox(tk.Canvas):
         x, y = 10, 20
 
         # Loop through each character in the text
-        for i in range(len(text)):
-            char = text[i]
+        for index in range(len(text)):
+            char = text[index]
             
             # Check for textbox end and handle line breaks
-            if text[i - 1] == " ":
+            if text[index - 1] == " ":
                 self.test.word_index += 1
                 word = self.test.words[self.test.word_index]
                 word_width = (len(word)) * 13
@@ -229,9 +223,6 @@ class Textbox(tk.Canvas):
         self.root.unbind("<Key>")
         self.root.unbind("<BackSpace>")
 
-        # Delete the cursor line
-        self.delete(self.cursor)
-
         # Calculate time taken
         time_elapsed = (test.stats["stoptime"] - test.stats["starttime"]) / 60
 
@@ -239,8 +230,11 @@ class Textbox(tk.Canvas):
         test.evaluate(time_elapsed)
         self.end()
 
+        # Clear the canvas
+        self.delete("all")
+
     def key_press(self, event):
-    # Handles key press events and updates the Textbox based on user input
+    # Handles key presses and updates the Textbox based on user input
 
         test = self.test
 
@@ -262,9 +256,13 @@ class Textbox(tk.Canvas):
 
         # Update character label color based on correctness
         if typed_char == required_char:
-            self.itemconfig(test.labels[self.current_index], fill="#ffffff")
+            self.itemconfigure(test.labels[self.current_index], fill="#ffffff")
         else:
-            self.itemconfig(test.labels[self.current_index], fill="#e14646", text=typed_char)
+            self.itemconfigure(test.labels[self.current_index], fill="#e14646", text=typed_char)
+            if required_char == ' ':
+                self.itemconfigure(test.labels[self.current_index], text="_")
+            if typed_char == ' ':
+                self.itemconfigure(test.labels[self.current_index], text=required_char)
 
         # Update test stats
         test.key_press(typed_char, required_char)
@@ -294,7 +292,7 @@ class Textbox(tk.Canvas):
 
         # Update current index and character label
         self.current_index = prev_index
-        self.itemconfig(
+        self.itemconfigure(
             test.labels[self.current_index], fill="#61616b", text=test.chars[self.current_index]
         )
 
@@ -325,7 +323,6 @@ class Textbox(tk.Canvas):
     # Binds a function to be called when the test ends
 
         self.end = function
-
 
 class TypingTest:
 # This class tracks stats and handles test data
@@ -408,7 +405,7 @@ class ToolTip:
             self.schedule_id = None
 
     def showtip(self, event=None):
-        # Creates and displays the tooltip at the specified position.
+        # Creates and displays the tooltip at the specified position
 
         # Get widget position relative to user's screen
         x = self.widget.winfo_rootx()

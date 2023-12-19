@@ -1,56 +1,157 @@
 from components import Window, Page, Textbox, ButtonPanel, Button, ToolTip
 
-from utils import get_quote, format_time
+from utils import get_quote, get_words, get_chars, format_time
 
-def quotes_page():
-    page1 = Page(window)
-    page1.add_title("practice quotes")
+def practice_page(title):
+# Creates a page for practicing typing 
 
-    buttons = ButtonPanel(page1, [2, 3])
+    page = Page(window)
+    page.add_title(f"practice {title}")
+
+    # Creates main button panel
+    buttons = ButtonPanel(page, 3)
     buttons.place(relx=0.5, y=110, anchor="center")
 
-    profile = buttons.buttons[0][0]
-    profile.config(text="profile", command=lambda: window.show_page(1))
-    ToolTip(profile, 'Check your statistics')
+    for index, name in enumerate(["quotes", "words", "chars"]):
 
-    options = buttons.buttons[0][1]
-    options.config(text="config", command=lambda: window.show_page(1))
-    ToolTip(options, 'Customize the application')
+        # Sets up each button's command and name
+        button = buttons.buttons[index]
+        button.config(text=name, command=lambda mode=index: change_mode(mode)) 
 
-    textbox = Textbox(page1)
+        ToolTip(button, f"Practice typing {name}")
 
-    #textbox.display_text(get_quote())
-    textbox.display_text("testing")
+        if name == title: # If button is for current page, it is highlighted
+            button["fg"] = "#a1a1ab"
+
+    # Create and bind textbox for user input and display practice text
+    textbox = Textbox(page)
     textbox.bind(lambda: end_page(textbox.test.stats))
-    textbox.ready()
 
-    window.register_page(page1)
+    return page
+
+def quotes_page():
+    # Typing test with random quotes
+
+    page = practice_page("quotes")
+    textbox = page.textbox
+
+    textbox.display_text(get_quote())
+
+    return page
+
+def words_page():
+    # Typing test with random words
+
+    page = practice_page("words")
+    textbox = page.textbox
+
+    textbox.display_text(get_words(length_words))
+
+    secondary_buttons(page, change_words)
+    
+    return page
+
+def chars_page():
+    # Typing test with random characters
+
+    page = practice_page("chars")
+    textbox = page.textbox
+
+    textbox.display_text(get_chars(length_chars))
+
+    secondary_buttons(page, change_chars)
+    
+    return page
 
 def end_page(results):
-    end_page = Page(window)
+    # Page to be displayed when a test is completed
+    page = Page(window)
 
-    end_page.add_field("wpm", results["wpm"], "Considers only correctly typed characters")
+    page.add_field("wpm", results["wpm"], "Considers only correctly typed characters")
 
-    end_page.add_field("accuracy", results["acc"])
+    page.add_field("accuracy", results["acc"], "Ratio of correct characters to total characters")
 
     if results["incorrect"]:
-        end_page.add_field("raw wpm", results["raw"], "Includes incorrectly typed characters")
+        page.add_field("raw wpm", results["raw"], "Includes incorrectly typed characters")
 
         weak = "Your weak keys are {}, and {}".format(", ".join(results["weak"][:-1]), results["weak"][-1])
-        end_page.add_field("mistakes", results["incorrect"], weak)
+        page.add_field("mistakes", results["incorrect"], weak)
     
     time = format_time(round(results["stoptime"]-results["starttime"], 1))
-    end_page.add_field("time taken", time)
+    page.add_field("time taken", time, "Time between first key press and last")
 
-    window.register_page(end_page)
+    restart = Button(page)
+    restart.config(text="restart", command=restart_test)
+    restart.place(relx=0.5, y=400, height=50, width=100, anchor="center")
+    ToolTip(restart, 'Restart the test')
+
+    window.register_page(page)
+
+def secondary_buttons(page, function):
+    # Creates button panel for adjusting number of words
+
+    buttons = ButtonPanel(page, 3, 40)
+    buttons.place(relx=0.5, y=160, anchor="center")
+    ToolTip(buttons, 'Adjust the number of words')
+    count = 0
+
+    for button in buttons.buttons:
+        count+=10
+        button.config(text=count, command=lambda c=count: function(c))
+        if count==length_chars: button["fg"] = "#a1a1ab"
+
+def start_test():
+
+    page = window.pages[current_mode]
+    page.textbox.ready()
+    window.show_page(current_mode)
+
+def restart_test():
+
+    window.register_page(modes[current_mode](), current_mode)
+    start_test()
+
+
+def change_mode(mode):
+
+    global current_mode
+    if current_mode != mode:    
+
+        window.register_page(modes[current_mode](), current_mode)                                       
+        current_mode = mode
+
+    restart_test()
+
+    window.show_page(current_mode)
+
+def change_words(new):
+
+    global length_words
+    length_words = new
+
+    restart_test()
+
+def change_chars(new):
+
+    global length_chars
+    length_chars = new
+
+    restart_test()
 
 window = Window()
 
-quotes_page()
+# Variables
+current_mode = 0
+length_chars = 30
+length_words = 30
 
-page2 = Page(window)
-window.register_page(page2)
-window.show_page(0)
+# Sets up all typing pages
+modes = (quotes_page, words_page, chars_page)
+for mode in modes:
 
+    window.register_page(mode())    
 
+start_test()
+
+# Starts the program
 window.mainloop()
