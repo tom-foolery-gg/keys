@@ -285,6 +285,7 @@ class Textbox(tk.Canvas):
     # Handles backspace events for deleting incorrectly typed chars
 
         test = self.test
+        if not self.current_index: return
         prev_index = self.current_index - 1
 
         # Check if the previous character was typed correctly

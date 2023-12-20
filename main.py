@@ -47,7 +47,7 @@ def words_page():
 
     textbox.display_text(get_words(length_words))
 
-    secondary_buttons(page, change_words)
+    secondary_buttons(page)
     
     return page
 
@@ -59,7 +59,7 @@ def chars_page():
 
     textbox.display_text(get_chars(length_chars))
 
-    secondary_buttons(page, change_chars)
+    secondary_buttons(page)
     
     return page
 
@@ -87,9 +87,9 @@ def end_page(results):
 
     window.register_page(page)
 
-def secondary_buttons(page, function):
+def secondary_buttons(page):
     # Creates button panel for adjusting number of words
-    
+
     title = page.title.split()[-1]
     buttons = ButtonPanel(page, 3, 40)
     buttons.place(relx=0.5, y=160, anchor="center")
