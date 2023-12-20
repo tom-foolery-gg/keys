@@ -63,6 +63,7 @@ class Page(tk.Frame):
 
     def add_title(self, title):
         # Adds a title label to the top of the page
+        self.title = title
 
         label = tk.Label(
             self,

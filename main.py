@@ -89,7 +89,8 @@ def end_page(results):
 
 def secondary_buttons(page, function):
     # Creates button panel for adjusting number of words
-
+    
+    title = page.title.split()[-1]
     buttons = ButtonPanel(page, 3, 40)
     buttons.place(relx=0.5, y=160, anchor="center")
     ToolTip(buttons, 'Adjust the number of words')
@@ -97,8 +98,17 @@ def secondary_buttons(page, function):
 
     for button in buttons.buttons:
         count+=10
-        button.config(text=count, command=lambda c=count: function(c))
-        if count==length_chars: button["fg"] = "#a1a1ab"
+        button.config(text=count)
+        
+        if title == "words":
+            button["command"] = lambda c=count: change_words(c) 
+            length = length_words
+        
+        elif title == "chars":
+            button["command"] = lambda c=count: change_chars(c) 
+            length = length_chars
+
+        if count==length: button["fg"] = "#a1a1ab"
 
 def start_test():
 
